@@ -57,3 +57,22 @@ if (written !== REVIEW) {
     `Read-back mismatch: wrote ${REVIEW.length} chars, read back ${written.length} chars`,
   );
 }
+
+// Reviser: re-validate the gate against the bytes actually on disk. The
+// equality check above only proves the file matches the in-memory constant;
+// this asserts the written bytes themselves satisfy the gate (1-140
+// characters, non-whitespace, single line), so a gate violation that
+// somehow survived in both copies still fails loudly here instead of
+// shipping an entry the sealed scorer would refuse.
+if (
+  written.length < 1 ||
+  written.length > 140 ||
+  written.trim().length === 0 ||
+  written.includes("\n") ||
+  written.includes("\r")
+) {
+  throw new Error(
+    `Written entry fails the gate: ${written.length} chars, ` +
+      `single-line=${!written.includes("\n") && !written.includes("\r")}`,
+  );
+}
